@@ -5,6 +5,12 @@
 
 ---
 
+## Screenshot
+
+![SYSCLOCK GUI screenshot](images/1.png)
+
+---
+
 ## 🇮🇹 Italiano
 
 ### Descrizione

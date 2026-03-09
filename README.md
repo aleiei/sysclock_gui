@@ -12,6 +12,28 @@
 
 L'applicazione è ispirata allo strumento a riga di comando `ctweaktime`, del quale riproduce le funzionalità principali aggiungendo un'interfaccia grafica moderna, un grafico storico degli offset, sincronizzazione NTP e gestione del fuso orario.
 
+#### Utilizzo in ambito Radioamatoriale — Modi digitali FT8, FT4 e altri
+
+SYSCLOCK è particolarmente utile per i **radioamatori** che operano in ambito **Radioamatoriale** con i modi digitali come **FT8**, **FT4**, **JT65**, **JT9** e simili con software come:
+
+- 🔵 **WSJT-X** (sviluppato da K1JT)
+- 🟢 **JTDX** (fork ottimizzato di WSJT-X)
+- 🟡 **MSHV** (multi-mode, sviluppato da LZ2HV)
+
+Questi modi digitali sono **estremamente sensibili alla sincronizzazione dell'orologio**: il protocollo FT8, ad esempio, utilizza slot temporali di esattamente 15 secondi e richiede che l'orologio del computer sia sincronizzato con il tempo UTC con una tolleranza di **±1 secondo** (idealmente entro ±0,5 s). Un orologio non sincronizzato causa mancate decodifiche e impossibilità di trasmettere correttamente.
+
+**Casi d'uso tipici:**
+
+| Situazione | Come usare SYSCLOCK |
+|---|---|
+| Orologio lento/veloce di qualche secondo | Usare i pulsanti **BACK / FORWARD** con passo 1s per correggere con precisione |
+| Operazione portatile senza internet | Correggere manualmente l'ora con riferimento a un GPS o orologio atomico |
+| Deriva dell'orologio durante un contest | Monitorare il grafico storico e correggere al volo senza uscire da WSJT-X |
+| NTP non disponibile o non affidabile | Disabilitare NTP e gestire l'ora manualmente con step fini (10–100 ms) |
+| Cambio di fuso orario in trasferta | Usare il pannello Timezone per aggiornare il SO in un click |
+
+> 💡 **Consiglio pratico:** Prima di una sessione FT8, verificare la sincronizzazione con un server NTP affidabile (es. `pool.ntp.org`) tramite il pulsante **ENABLE NTP**. Se si opera in assenza di connessione internet, usare SYSCLOCK per allineare manualmente l'orologio a un riferimento GPS prima di avviare WSJT-X / JTDX / MSHV.
+
 ---
 
 ### Descrizione tecnica
@@ -233,6 +255,28 @@ Il grafico mostra l'andamento dell'offset cumulativo aggiornato ogni secondo. I 
 **SYSCLOCK** is a desktop application with a graphical user interface (GUI) written entirely in **Python 3** using the built-in **tkinter** library. It allows easy, visual management of the system clock with no external dependencies.
 
 The application is inspired by the `ctweaktime` command-line tool, reproducing its core features while adding a modern GUI, an offset history chart, NTP synchronization, and timezone management.
+
+#### Amateur Radio Use — FT8, FT4 and Other Digital Modes
+
+SYSCLOCK is especially useful for **amateur radio operators** working in the **Amateur Radio** field with digital modes such as **FT8**, **FT4**, **JT65**, **JT9** and similar, using software like:
+
+- 🔵 **WSJT-X** (developed by K1JT)
+- 🟢 **JTDX** (optimised WSJT-X fork)
+- 🟡 **MSHV** (multi-mode software by LZ2HV)
+
+These digital modes are **extremely sensitive to clock synchronisation**: the FT8 protocol, for example, uses fixed 15-second time slots and requires the computer clock to be synchronised to UTC within **±1 second** (ideally within ±0.5 s). An unsynchronised clock causes missed decodes and prevents correct transmission.
+
+**Typical use cases:**
+
+| Situation | How to use SYSCLOCK |
+|---|---|
+| Clock running a few seconds fast or slow | Use **BACK / FORWARD** buttons with a 1s step to correct precisely |
+| Portable operation without internet | Manually set the time using a GPS or atomic clock reference |
+| Clock drift during a contest | Monitor the history chart and correct on the fly without leaving WSJT-X |
+| NTP unavailable or unreliable | Disable NTP and manage time manually with fine steps (10–100 ms) |
+| Timezone change when operating away from home | Use the Timezone panel to update the OS in one click |
+
+> 💡 **Practical tip:** Before an FT8 session, verify synchronisation with a reliable NTP server (e.g. `pool.ntp.org`) using the **ENABLE NTP** button. If operating without an internet connection, use SYSCLOCK to manually align the clock to a GPS reference before launching WSJT-X / JTDX / MSHV.
 
 ---
 

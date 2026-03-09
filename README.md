@@ -1,5 +1,6 @@
-# SYSCLOCK — System Clock Manager
+# SYSCLOCK — System Time Control
 
+> **Ham Radio — Strumento per radioamatori / Ham Radio Tool**
 > © 2026 Alessandro Orlando — GNU General Public License v3.0
 
 ---
@@ -8,31 +9,33 @@
 
 ### Descrizione
 
-**SYSCLOCK** è un'applicazione desktop con interfaccia grafica (GUI) scritta interamente in **Python 3** usando la libreria standard **tkinter**. Permette di gestire l'orologio di sistema in modo semplice e visivo, senza dipendenze esterne.
+**SYSCLOCK — System Time Control** è un'applicazione desktop con interfaccia grafica (GUI) scritta interamente in **Python 3** usando la libreria standard **tkinter**, senza dipendenze esterne.
 
-L'applicazione è ispirata allo strumento a riga di comando `ctweaktime`, del quale riproduce le funzionalità principali aggiungendo un'interfaccia grafica moderna, un grafico storico degli offset, sincronizzazione NTP e gestione del fuso orario.
+È pensata specificamente per i **radioamatori** che operano con i **modi digitali** (FT8, FT4, JT65, JT9 e simili), dove la precisione dell'orologio di sistema è critica. Consente di correggere rapidamente la sincronizzazione del clock direttamente dal valore **DT** riportato da WSJT-X, JTDX o MSHV, e di gestire NTP, fuso orario e ora esatta in un'unica interfaccia.
 
-#### Utilizzo in ambito Radioamatoriale — Modi digitali FT8, FT4 e altri
+---
 
-SYSCLOCK è particolarmente utile per i **radioamatori** che operano in ambito **Radioamatoriale** con i modi digitali come **FT8**, **FT4**, **JT65**, **JT9** e simili con software come:
+### Perché i radioamatori ne hanno bisogno
 
-- 🔵 **WSJT-X** (sviluppato da K1JT)
-- 🟢 **JTDX** (fork ottimizzato di WSJT-X)
-- 🟡 **MSHV** (multi-mode, sviluppato da LZ2HV)
+I modi digitali deboli come **FT8** e **FT4** si basano su slot temporali fissi di 15 secondi sincronizzati con UTC. Se l'orologio del computer devia anche solo di 1–2 secondi, le decodifiche falliscono e la trasmissione diventa impossibile. Il parametro **DT** (Delta Time) mostrato da WSJT-X, JTDX e MSHV indica esattamente questo scarto.
 
-Questi modi digitali sono **estremamente sensibili alla sincronizzazione dell'orologio**: il protocollo FT8, ad esempio, utilizza slot temporali di esattamente 15 secondi e richiede che l'orologio del computer sia sincronizzato con il tempo UTC con una tolleranza di **±1 secondo** (idealmente entro ±0,5 s). Un orologio non sincronizzato causa mancate decodifiche e impossibilità di trasmettere correttamente.
+SYSCLOCK permette di:
 
-**Casi d'uso tipici:**
+- Correggere il clock del PC in un click inserendo il valore DT
+- Operare **senza connessione internet** (operazioni portatili, contest, SOTA, POTA)
+- Disabilitare NTP in modo completo per evitare che il demone reintroduca derive
+- Impostare l'ora manualmente da un riferimento GPS o orologio atomico
+- Monitorare visivamente la deriva accumulata nel tempo tramite il grafico storico
 
 | Situazione | Come usare SYSCLOCK |
 |---|---|
-| Orologio lento/veloce di qualche secondo | Usare i pulsanti **BACK / FORWARD** con passo 1s per correggere con precisione |
-| Operazione portatile senza internet | Correggere manualmente l'ora con riferimento a un GPS o orologio atomico |
-| Deriva dell'orologio durante un contest | Monitorare il grafico storico e correggere al volo senza uscire da WSJT-X |
-| NTP non disponibile o non affidabile | Disabilitare NTP e gestire l'ora manualmente con step fini (10–100 ms) |
-| Cambio di fuso orario in trasferta | Usare il pannello Timezone per aggiornare il SO in un click |
+| DT mostrato in WSJT-X è ±0.5s o più | Inserire il valore DT nel pannello FT8 e premere **APPLY DT** |
+| Operazione portatile senza internet | Disabilitare NTP, impostare l'ora con **SET EXACT TIME** da GPS |
+| Deriva progressiva durante un contest | Monitorare il grafico storico e applicare correzioni DT al volo |
+| NTP non disponibile o inaffidabile | Disabilitare NTP e usare **RESTORE CLOCK FROM SNAPSHOT** |
+| Cambio fuso orario in trasferta | Aggiornare il SO con il pannello **TIMEZONE** in un click |
 
-> 💡 **Consiglio pratico:** Prima di una sessione FT8, verificare la sincronizzazione con un server NTP affidabile (es. `pool.ntp.org`) tramite il pulsante **ENABLE NTP**. Se si opera in assenza di connessione internet, usare SYSCLOCK per allineare manualmente l'orologio a un riferimento GPS prima di avviare WSJT-X / JTDX / MSHV.
+> **Compatibile con WSJT-X · JTDX · MSHV**
 
 ---
 
@@ -45,248 +48,212 @@ Questi modi digitali sono **estremamente sensibili alla sincronizzazione dell'or
 | Dipendenze esterne | **Nessuna** |
 | Sistemi operativi | Linux, macOS, Windows |
 | Privilegi richiesti | root / amministratore per le operazioni di sistema |
-| Architettura | Single-file, multi-thread (operazioni di sistema in thread separati) |
+| Architettura | Single-file, multi-thread con coda thread-safe (queue.Queue) |
 | Licenza | GNU GPL v3.0 |
 
-#### Componenti interni
+#### Funzioni attualmente in uso
 
-| Modulo / Classe | Funzione |
+| Funzione | Descrizione |
 |---|---|
-| `set_system_time(dt)` | Imposta l'orologio di sistema a un datetime preciso |
-| `step_system_time(ms)` | Avanza o ritarda l'orologio di un numero di millisecondi |
-| `get_timezones()` | Recupera l'elenco dei fusi orari disponibili |
-| `set_timezone(tz)` | Imposta il fuso orario di sistema |
-| `ntp_sync(enable)` | Abilita o disabilita la sincronizzazione NTP |
-| `get_ntp_status()` | Legge lo stato corrente di NTP |
-| `RingBuffer` | Buffer circolare per lo storico degli offset (120 campioni) |
-| `SysClockApp` | Classe principale dell'applicazione (tkinter.Tk) |
+| `_linux_set_clock(dt)` | Imposta `CLOCK_REALTIME` via `clock_settime()` (libc, ns) + reset PLL con `adjtimex(2)` |
+| `set_system_time(dt)` | Wrapper multi-OS: libc su Linux, `date` su macOS, `SetLocalTime` WinAPI su Windows |
+| `ntp_enable()` | Unmask + riabilita tutti i demoni NTP noti tramite `timedatectl` e `systemctl` |
+| `ntp_disable()` | Ferma, disabilita e **maschera** tutti i demoni NTP (incluso socket) + reset kernel PLL |
+| `ntp_status()` | Verifica se NTP è attivo (`timedatectl` + `systemctl is-active` per ogni demone noto) |
+| `get_timezones()` | Recupera l'elenco dei fusi orari (timedatectl / zoneinfo / tzutil) |
+| `set_timezone(tz)` | Imposta il fuso orario di sistema (`timedatectl` / `systemsetup` / `tzutil`) |
+| `RingBuffer` | Buffer circolare thread-safe per lo storico degli offset (120 campioni, ~2 min) |
+| `SysClockApp` | Classe principale (tkinter.Tk), architettura producer/consumer con queue |
+| `_do_step(ms)` | Calcola target da riferimento monotono e invia syscall al thread worker |
+| `_tick()` | Loop principale (500ms): drena coda, aggiorna display, offset, history, chart |
+| `_restore_clock()` | Ripristina l'ora OS dallo snapshot monotono — nessuna rete, nessun subprocess |
 
-#### Comandi di sistema utilizzati
+#### Costanti Linux
 
-| OS | Comando |
-|---|---|
-| Linux | `date -s`, `timedatectl set-time`, `timedatectl set-ntp`, `timedatectl set-timezone`, `timedatectl list-timezones` |
-| macOS | `date <timestamp>`, `systemsetup -settimezone`, `systemsetup -setusingnetworktime` |
-| Windows | `SetLocalTime` (ctypes/WinAPI), `tzutil /s`, `tzutil /l`, `w32tm /resync`, `net start/stop w32time`, `sc query w32time` |
+| Costante | Valore | Uso |
+|---|---|---|
+| `_NTP_UNITS` | 7 unit | Demoni e socket gestiti da `ntp_disable` / `ntp_enable` |
+| `_CLOCK_REALTIME` | 0 | Clock ID per `clock_settime` |
+| `_STA_UNSYNC` | 0x0040 | Segnala al kernel che il clock non è sincronizzato, blocca il PLL |
+| `_ADJ_OFFSET/FREQUENCY/STATUS` | 0x0001/0x0002/0x0010 | Azzera offset, frequenza e stato PLL via `adjtimex` |
+
+#### Comandi di sistema per OS
+
+| OS | Operazione | Metodo |
+|---|---|---|
+| Linux | Imposta ora | `clock_settime(CLOCK_REALTIME)` via libc ctypes (nanosec) |
+| Linux | Blocca deriva | `adjtimex(2)` reset PLL — struct Timex 208 byte |
+| Linux | NTP disable | `timedatectl set-ntp false` + `systemctl stop/disable/mask` + reset PLL |
+| Linux | NTP enable | `systemctl unmask` + `timedatectl set-ntp true` |
+| Linux | Timezone | `timedatectl set-timezone` |
+| macOS | Imposta ora | `date <MMDDHHmmYYYY.SS>` (sudo) |
+| macOS | NTP | `systemsetup -setusingnetworktime on/off` |
+| macOS | Timezone | `systemsetup -settimezone` |
+| Windows | Imposta ora | `SetLocalTime()` WinAPI via ctypes (millisec) |
+| Windows | NTP | `net start/stop w32time`, `w32tm /resync`, `sc config` |
+| Windows | Timezone | `tzutil /s` |
 
 ---
 
 ### Funzionalità
 
-- **Orologio live** — visualizza ora e data aggiornate ogni secondo
-- **Step avanti/indietro** — sposta l'orologio di un passo configurabile (da 10 ms a 60 s)
-- **Preset rapidi** — pulsanti preimpostati: 10ms, 50ms, 100ms, 500ms, 1s, 5s, 30s, 60s
-- **Slider personalizzato** — scelta libera del passo tra 10 ms e 60.000 ms
-- **Imposta ora esatta** — inserimento manuale di data e ora nel formato `YYYY-MM-DD / HH:MM:SS`
-- **Sincronizzazione NTP** — abilita/disabilita NTP con un click, con indicatore di stato
-- **Gestione fuso orario** — menu a tendina con tutti i timezone disponibili, applicazione immediata
-- **Grafico storico** — sparkline degli ultimi 2 minuti di offset accumulato
-- **Log operazioni** — registro timestampato di tutte le azioni, con colori per esito (verde/rosso/blu)
-- **Reset offset** — azzera il contatore cumulativo
-- **Scorciatoie da tastiera** — controllo completo da tastiera senza mouse
+- **Orologio live** — ora e data aggiornate ogni 500ms, calcolate da riferimento monotono (immune a derive OS)
+- **FT8/FT4 DT Correction** — inserisci il DT da WSJT-X/JTDX/MSHV, correzione applicata con segno invertito; barra tolleranza visiva (verde < 0.5s, arancione < 1s, rosso ≥ 1s)
+- **Pulsanti quick DT** — correzioni rapide ±0.1s, ±0.5s, ±1s, ±2s con un click
+- **Imposta ora esatta** — data e ora manuali `YYYY-MM-DD / HH:MM:SS`, tasto **NOW** per precompilare
+- **Gestione NTP completa** — ENABLE / DISABLE con mascheratura demoni; stato in tempo reale
+- **Restore clock from snapshot** — ripristina l'ora precisa dallo snapshot del DISABLE NTP tramite contatore monotono (nessuna rete)
+- **Gestione fuso orario** — menu a tendina con tutti i timezone, applicazione immediata
+- **Grafico storico offset** — sparkline ultimi 2 minuti, thread-safe
+- **Log operazioni** — registro timestampato, colori per esito
+- **Compatibile Linux, macOS, Windows** — ogni OS usa le proprie API native
 
 ---
 
 ### Istruzioni d'uso
 
-#### Installazione per sistema operativo
-
----
+#### Installazione
 
 ##### 🐧 Linux
-
-1. **Verifica Python e tkinter**
 
 ```bash
 python3 --version
 python3 -c "import tkinter; print('tkinter OK')"
-```
+# se tkinter manca:
+sudo apt install python3-tk        # Debian/Ubuntu
+sudo dnf install python3-tkinter   # Fedora
+sudo pacman -S tk                  # Arch
 
-2. **Se tkinter non è installato**, installarlo con il gestore pacchetti:
-
-```bash
-# Debian / Ubuntu / Linux Mint
-sudo apt install python3-tk
-
-# Fedora / RHEL
-sudo dnf install python3-tkinter
-
-# Arch Linux
-sudo pacman -S tk
-```
-
-3. **Avvio** (richiede root per modificare l'orologio):
-
-```bash
 sudo python3 sysclock_gui.py
 ```
-
-> 💡 Se `sudo` richiede la password ad ogni avvio, aggiungere la riga seguente a `/etc/sudoers` (con `visudo`) per consentire i comandi necessari senza password:
-> ```
-> tuo_utente ALL=(ALL) NOPASSWD: /usr/bin/timedatectl, /usr/bin/date
-> ```
-
----
 
 ##### 🍎 macOS
 
-1. **Verifica Python** — macOS include Python 3 dalla versione 12.3+. In alternativa installare tramite [Homebrew](https://brew.sh):
-
 ```bash
 brew install python3
-```
-
-2. **Verifica tkinter**:
-
-```bash
 python3 -c "import tkinter; print('tkinter OK')"
-```
+brew install python-tk   # se manca
 
-3. Se tkinter non è disponibile:
-
-```bash
-brew install python-tk
-```
-
-4. **Avvio** (richiede privilegi amministratore):
-
-```bash
 sudo python3 sysclock_gui.py
 ```
 
-> ⚠️ Su macOS Monterey e versioni successive, potrebbe essere necessario concedere i permessi di accesso al sistema nelle **Preferenze di Sistema → Privacy e sicurezza**.
-
----
-
 ##### 🪟 Windows
 
-1. **Scarica Python** da [python.org](https://www.python.org/downloads/windows/) e installa la versione 3.8 o superiore. Durante l'installazione selezionare **"Add Python to PATH"**.
-
-2. **Verifica l'installazione** (tkinter è incluso di default nell'installer ufficiale):
+Installare Python 3.8+ da [python.org](https://www.python.org/downloads/windows/) con **"Add Python to PATH"** selezionato. Avviare da **Prompt come Amministratore**:
 
 ```cmd
-python --version
-python -c "import tkinter; print('tkinter OK')"
-```
-
-3. **Avvio come Amministratore** — obbligatorio per modificare l'orologio di sistema:
-
-   - Cercare **Prompt dei comandi** nel menu Start
-   - Fare clic destro → **Esegui come amministratore**
-   - Nella finestra che si apre, navigare nella cartella del file:
-
-```cmd
-cd C:\percorso\della\cartella
+cd C:\percorso\cartella
 python sysclock_gui.py
 ```
 
-   In alternativa, creare un collegamento sul Desktop con:
-   - Destinazione: `python.exe C:\percorso\sysclock_gui.py`
-   - Avanzate → **Esegui come amministratore** ✓
-
-> ⚠️ Senza privilegi di Amministratore le funzioni di modifica dell'ora, NTP e timezone non avranno effetto. L'applicazione lo segnala con l'indicatore **NO ROOT** nella barra del titolo.
-
----
-
-#### Avvio — riepilogo rapido
+#### Riepilogo avvio
 
 | Sistema | Comando |
 |---|---|
 | Linux | `sudo python3 sysclock_gui.py` |
 | macOS | `sudo python3 sysclock_gui.py` |
-| Windows | Prompt dei comandi come Amministratore → `python sysclock_gui.py` |
+| Windows | Prompt come Amministratore → `python sysclock_gui.py` |
 
-#### Scorciatoie da tastiera
+---
 
-| Tasto | Azione |
-|---|---|
-| `<` oppure `,` | Sposta l'orologio **indietro** del passo corrente |
-| `>` oppure `.` | Sposta l'orologio **avanti** del passo corrente |
-| `+` oppure `=` | **Aumenta** il passo al preset successivo |
-| `-` oppure `_` | **Diminuisce** il passo al preset precedente |
-| `Q` oppure `Esc` | **Chiude** l'applicazione |
+#### Pannello FT8 / FT4 — DT Correction
 
-#### Pannello Step Controls
+1. Leggere il valore **DT** da WSJT-X, JTDX o MSHV (es. `+0.8` o `-1.2`).
+2. Inserirlo nel campo **DT value (s)** e premere **APPLY DT** — la correzione viene applicata con segno invertito.
+3. Usare i **pulsanti quick** (±0.1s … ±2s) per correzioni istantanee.
+4. La **barra di tolleranza**: verde |DT| < 0.5s ✓, arancione < 1s ⚠, rosso ≥ 1s ✗.
 
-1. Scegliere un passo dai **pulsanti preset** oppure usare lo **slider** per un valore personalizzato.
-2. Cliccare **◀◀ BACK** per spostare l'orologio indietro, **FORWARD ▶▶** per spostarlo avanti.
-3. Il totale dell'offset accumulato è sempre visibile nel pannello in alto a sinistra.
-4. Cliccare **RESET OFFSET** per azzerare il contatore (non modifica l'orologio di sistema).
+#### Pannello SET EXACT TIME
 
-#### Pannello Set Exact Time
-
-1. Inserire la data nel campo **Date** nel formato `YYYY-MM-DD`.
-2. Inserire l'ora nel campo **Time** nel formato `HH:MM:SS`.
-3. Cliccare **NOW** per pre-compilare automaticamente l'ora corrente.
-4. Cliccare **SET** per applicare la data/ora al sistema.
+1. Data nel formato `YYYY-MM-DD`, ora nel formato `HH:MM:SS`.
+2. **NOW** precompila con l'ora corrente del sistema.
+3. **SET** applica al sistema.
 
 #### Pannello NTP
 
-- Lo stato NTP (attivo / inattivo) è indicato da un pallino colorato (verde = attivo).
-- Cliccare **ENABLE NTP** per abilitare la sincronizzazione automatica dell'ora.
-- Cliccare **DISABLE NTP** per disabilitarla (necessario prima di modificare l'ora manualmente su Linux).
+- Indicatore colorato: verde = NTP attivo, rosso = NTP inattivo.
+- **ENABLE NTP** — unmask + riabilita sincronizzazione automatica.
+- **DISABLE NTP** — disabilita completamente: ferma, disabilita e maschera tutti i demoni noti (incluso `systemd-timesyncd.socket`) + reset PLL kernel Linux.
+- **RESTORE CLOCK FROM SNAPSHOT** — ripristina l'ora OS dal snapshot salvato al DISABLE NTP, usando il contatore monotono. Nessuna rete richiesta.
 
-#### Pannello Timezone
+#### Pannello TIMEZONE
 
-1. Selezionare il fuso orario desiderato dal menu a tendina.
-2. Cliccare **APPLY** per impostarlo nel sistema.
+Selezionare il fuso orario e premere **APPLY**.
 
-#### Grafico storico
+#### Grafico OFFSET HISTORY
 
-Il grafico mostra l'andamento dell'offset cumulativo aggiornato ogni secondo. I valori minimi e massimi sono riportati sotto il grafico. La linea tratteggiata orizzontale rappresenta lo zero.
+Trend dell'offset cumulativo aggiornato ogni 500ms. Min/max sotto il grafico. Linea tratteggiata = zero.
 
 ---
 
 ### Note e avvertenze
 
-- Su **Linux**, se `sudo` è configurato senza password (`NOPASSWD`), i comandi vengono eseguiti silenziosamente. Altrimenti potrebbe essere necessario inserire la password nel terminale da cui si avvia l'applicazione.
-- Su **macOS**, alcuni comandi richiedono che `sudo` non richieda password per l'utente corrente oppure che si usi `su`.
-- Su **Windows**, l'applicazione usa direttamente le API di sistema (`SetLocalTime` via ctypes, `tzutil`, `w32tm`) senza passare per `cmd`. È necessario avviare il programma da un **Prompt dei comandi con privilegi di Amministratore**.
-- La modifica dell'ora di sistema con **NTP attivo** su Linux verrà sovrascritta automaticamente dal demone NTP. Disabilitare NTP prima di effettuare modifiche manuali. Su Windows, il servizio `w32time` viene gestito tramite i pulsanti NTP dell'applicazione.
-- Il **contatore offset** è puramente informativo e locale all'applicazione: viene azzerato alla chiusura del programma.
+- Su **Linux**: `clock_settime` via libc (nanosecondo) + `adjtimex` reset PLL dopo ogni correzione.
+- Su **Linux**: **DISABLE NTP** maschera anche `systemd-timesyncd.socket` per impedire il riavvio automatico via socket activation.
+- Su **macOS**: il reset del PLL del kernel non è applicabile. Alcuni comandi richiedono sudo senza password.
+- Su **Windows**: `SetLocalTime()` via WinAPI (millisecondo). Richiede Prompt come Amministratore.
+- L'**offset counter** è locale all'applicazione e si azzera alla chiusura.
+- Le funzioni Linux (`clock_settime`, `adjtimex`) non vengono mai chiamate su macOS o Windows.
 
 ---
+
+### Licenza
+
+```
+SYSCLOCK — System Time Control
+Copyright (C) 2026  Alessandro Orlando
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+```
+
 ---
 
 ## 🇬🇧 English
 
 ### Description
 
-**SYSCLOCK** is a desktop application with a graphical user interface (GUI) written entirely in **Python 3** using the built-in **tkinter** library. It allows easy, visual management of the system clock with no external dependencies.
+**SYSCLOCK — System Time Control** is a desktop GUI application written entirely in **Python 3** using the standard **tkinter** library, with no external dependencies.
 
-The application is inspired by the `ctweaktime` command-line tool, reproducing its core features while adding a modern GUI, an offset history chart, NTP synchronization, and timezone management.
+Designed specifically for **amateur radio operators (ham radio)** working with **weak-signal digital modes** (FT8, FT4, JT65, JT9 and similar), where system clock accuracy is critical. It allows quick clock correction directly from the **DT** value reported by WSJT-X, JTDX or MSHV, and manages NTP, timezone and exact time in a single interface.
 
-#### Amateur Radio Use — FT8, FT4 and Other Digital Modes
+---
 
-SYSCLOCK is especially useful for **amateur radio operators** working in the **Amateur Radio** field with digital modes such as **FT8**, **FT4**, **JT65**, **JT9** and similar, using software like:
+### Why Ham Radio Operators Need It
 
-- 🔵 **WSJT-X** (developed by K1JT)
-- 🟢 **JTDX** (optimised WSJT-X fork)
-- 🟡 **MSHV** (multi-mode software by LZ2HV)
+Weak-signal modes like **FT8** and **FT4** rely on fixed 15-second time slots synchronized to UTC. A clock drift of just 1–2 seconds causes decoding failures and makes transmission impossible. The **DT** (Delta Time) value shown by WSJT-X, JTDX and MSHV indicates exactly this offset.
 
-These digital modes are **extremely sensitive to clock synchronisation**: the FT8 protocol, for example, uses fixed 15-second time slots and requires the computer clock to be synchronised to UTC within **±1 second** (ideally within ±0.5 s). An unsynchronised clock causes missed decodes and prevents correct transmission.
+SYSCLOCK allows you to:
 
-**Typical use cases:**
+- Correct the PC clock in one click by entering the DT value
+- Operate **without internet** (portable ops, contests, SOTA, POTA)
+- Fully disable NTP to prevent the sync daemon from reintroducing drift
+- Set time manually from a GPS or atomic clock reference
+- Visually monitor accumulated drift via the history chart
 
 | Situation | How to use SYSCLOCK |
 |---|---|
-| Clock running a few seconds fast or slow | Use **BACK / FORWARD** buttons with a 1s step to correct precisely |
-| Portable operation without internet | Manually set the time using a GPS or atomic clock reference |
-| Clock drift during a contest | Monitor the history chart and correct on the fly without leaving WSJT-X |
-| NTP unavailable or unreliable | Disable NTP and manage time manually with fine steps (10–100 ms) |
-| Timezone change when operating away from home | Use the Timezone panel to update the OS in one click |
+| DT in WSJT-X is ±0.5s or more | Enter DT value in the FT8 panel and press **APPLY DT** |
+| Portable operation without internet | Disable NTP, set exact time from GPS with **SET EXACT TIME** |
+| Progressive drift during a contest | Monitor history chart and apply DT corrections on the fly |
+| NTP unavailable or unreliable | Disable NTP and use **RESTORE CLOCK FROM SNAPSHOT** |
+| Timezone change while travelling | Update the OS with the **TIMEZONE** panel in one click |
 
-> 💡 **Practical tip:** Before an FT8 session, verify synchronisation with a reliable NTP server (e.g. `pool.ntp.org`) using the **ENABLE NTP** button. If operating without an internet connection, use SYSCLOCK to manually align the clock to a GPS reference before launching WSJT-X / JTDX / MSHV.
+> **Compatible with WSJT-X · JTDX · MSHV**
 
 ---
 
 ### Technical Description
-
-### GitHub Topics
-
-Use these repository topics to align metadata with this README:
-
-`python`, `tkinter`, `desktop-gui`, `system-clock`, `time-sync`, `ntp`, `timezone`, `clock-management`, `amateur-radio`, `ham-radio`, `ft8`, `ft4`, `wsjtx`, `jtdx`, `mshv`
 
 | Item | Detail |
 |---|---|
@@ -295,212 +262,144 @@ Use these repository topics to align metadata with this README:
 | External dependencies | **None** |
 | Operating systems | Linux, macOS, Windows |
 | Required privileges | root / administrator for system operations |
-| Architecture | Single-file, multi-threaded (system calls run in background threads) |
+| Architecture | Single-file, multi-thread with thread-safe queue (queue.Queue) |
 | License | GNU GPL v3.0 |
 
-#### Internal Components
+#### Functions currently in use
 
-| Module / Class | Purpose |
+| Function | Description |
 |---|---|
-| `set_system_time(dt)` | Sets the system clock to a precise datetime |
-| `step_system_time(ms)` | Advances or rewinds the clock by a number of milliseconds |
-| `get_timezones()` | Retrieves the list of available timezones |
-| `set_timezone(tz)` | Sets the system timezone |
-| `ntp_sync(enable)` | Enables or disables NTP synchronization |
-| `get_ntp_status()` | Reads the current NTP status |
-| `RingBuffer` | Circular buffer for offset history (120 samples) |
-| `SysClockApp` | Main application class (tkinter.Tk) |
+| `_linux_set_clock(dt)` | Sets `CLOCK_REALTIME` via `clock_settime()` (libc, ns) + PLL reset via `adjtimex(2)` |
+| `set_system_time(dt)` | Multi-OS wrapper: libc on Linux, `date` on macOS, `SetLocalTime` WinAPI on Windows |
+| `ntp_enable()` | Unmasks and re-enables all known NTP daemons via `timedatectl` and `systemctl` |
+| `ntp_disable()` | Stops, disables and **masks** all NTP daemons (including activation socket) + kernel PLL reset |
+| `ntp_status()` | Checks if NTP is active (`timedatectl` + `systemctl is-active` for each known daemon) |
+| `get_timezones()` | Retrieves available timezone list (timedatectl / zoneinfo / tzutil) |
+| `set_timezone(tz)` | Sets system timezone (`timedatectl` / `systemsetup` / `tzutil`) |
+| `RingBuffer` | Thread-safe circular buffer for offset history (120 samples, ~2 min) |
+| `SysClockApp` | Main application class (tkinter.Tk), producer/consumer architecture |
+| `_do_step(ms)` | Computes target from monotonic reference, sends syscall to worker thread |
+| `_tick()` | Main loop (500ms): drains queue, updates display, offset, history, chart |
+| `_restore_clock()` | Restores OS time from monotonic snapshot — no network, no subprocess |
 
-#### System Commands Used
+#### System commands per OS
 
-| OS | Command |
-|---|---|
-| Linux | `date -s`, `timedatectl set-time`, `timedatectl set-ntp`, `timedatectl set-timezone`, `timedatectl list-timezones` |
-| macOS | `date <timestamp>`, `systemsetup -settimezone`, `systemsetup -setusingnetworktime` |
-| Windows | `SetLocalTime` (ctypes/WinAPI), `tzutil /s`, `tzutil /l`, `w32tm /resync`, `net start/stop w32time`, `sc query w32time` |
+| OS | Operation | Method |
+|---|---|---|
+| Linux | Set time | `clock_settime(CLOCK_REALTIME)` via libc ctypes (nanosec) |
+| Linux | Stop drift | `adjtimex(2)` PLL reset — complete Timex struct 208 bytes |
+| Linux | NTP disable | `timedatectl set-ntp false` + `systemctl stop/disable/mask` + PLL reset |
+| Linux | NTP enable | `systemctl unmask` + `timedatectl set-ntp true` |
+| Linux | Timezone | `timedatectl set-timezone` |
+| macOS | Set time | `date <MMDDHHmmYYYY.SS>` (sudo) |
+| macOS | NTP | `systemsetup -setusingnetworktime on/off` |
+| macOS | Timezone | `systemsetup -settimezone` |
+| Windows | Set time | `SetLocalTime()` WinAPI via ctypes (millisec) |
+| Windows | NTP | `net start/stop w32time`, `w32tm /resync`, `sc config` |
+| Windows | Timezone | `tzutil /s` |
 
 ---
 
 ### Features
 
-- **Live clock** — displays current time and date, updated every second
-- **Step forward/backward** — shifts the clock by a configurable step (from 10 ms to 60 s)
-- **Quick presets** — preset buttons: 10ms, 50ms, 100ms, 500ms, 1s, 5s, 30s, 60s
-- **Custom slider** — freely choose the step between 10 ms and 60,000 ms
-- **Set exact time** — manually enter a date and time in `YYYY-MM-DD / HH:MM:SS` format
-- **NTP synchronization** — enable/disable NTP with one click, with status indicator
-- **Timezone management** — dropdown menu with all available timezones, applied immediately
-- **History chart** — sparkline of the last 2 minutes of accumulated offset
-- **Operations log** — timestamped log of all actions, color-coded by result (green/red/blue)
-- **Reset offset** — clears the cumulative counter
-- **Keyboard shortcuts** — full keyboard control without a mouse
+- **Live clock** — time and date updated every 500ms, computed from monotonic reference (immune to OS drift)
+- **FT8/FT4 DT Correction** — enter DT from WSJT-X/JTDX/MSHV, correction applied with inverted sign; visual tolerance bar (green < 0.5s, orange < 1s, red ≥ 1s)
+- **Quick DT buttons** — instant corrections of ±0.1s, ±0.5s, ±1s, ±2s
+- **Set exact time** — manual `YYYY-MM-DD / HH:MM:SS` entry with **NOW** button
+- **Full NTP management** — ENABLE / DISABLE with daemon masking; real-time status indicator
+- **Restore clock from snapshot** — restores OS clock from monotonic snapshot saved at DISABLE NTP — no network required
+- **Timezone management** — dropdown with all available timezones, applied immediately
+- **Offset history chart** — sparkline of last 2 minutes, thread-safe
+- **Operations log** — timestamped, color-coded by result
+- **Linux, macOS and Windows compatible** — each OS uses its own native APIs
 
 ---
 
 ### Usage Instructions
 
-#### Installation by Operating System
-
----
+#### Installation
 
 ##### 🐧 Linux
 
-1. **Check Python and tkinter**
-
 ```bash
-python3 --version
-python3 -c "import tkinter; print('tkinter OK')"
-```
+python3 -c "import tkinter; print('OK')"
+sudo apt install python3-tk     # Debian/Ubuntu
+sudo dnf install python3-tkinter # Fedora
+sudo pacman -S tk                # Arch
 
-2. **If tkinter is not installed**, install it with your package manager:
-
-```bash
-# Debian / Ubuntu / Linux Mint
-sudo apt install python3-tk
-
-# Fedora / RHEL
-sudo dnf install python3-tkinter
-
-# Arch Linux
-sudo pacman -S tk
-```
-
-3. **Launch** (root required to modify the clock):
-
-```bash
 sudo python3 sysclock_gui.py
 ```
-
-> 💡 If `sudo` asks for a password every time, add the following line to `/etc/sudoers` (using `visudo`) to allow the required commands without a password:
-> ```
-> your_user ALL=(ALL) NOPASSWD: /usr/bin/timedatectl, /usr/bin/date
-> ```
-
----
 
 ##### 🍎 macOS
 
-1. **Check Python** — macOS includes Python 3 from version 12.3+. Alternatively, install via [Homebrew](https://brew.sh):
-
 ```bash
 brew install python3
-```
-
-2. **Check tkinter**:
-
-```bash
-python3 -c "import tkinter; print('tkinter OK')"
-```
-
-3. If tkinter is not available:
-
-```bash
-brew install python-tk
-```
-
-4. **Launch** (administrator privileges required):
-
-```bash
+brew install python-tk   # if tkinter missing
 sudo python3 sysclock_gui.py
 ```
 
-> ⚠️ On macOS Monterey and later, you may need to grant system access permissions in **System Preferences → Privacy & Security**.
-
----
-
 ##### 🪟 Windows
 
-1. **Download Python** from [python.org](https://www.python.org/downloads/windows/) and install version 3.8 or later. During installation, check **"Add Python to PATH"**.
-
-2. **Verify the installation** (tkinter is included by default in the official installer):
-
-```cmd
-python --version
-python -c "import tkinter; print('tkinter OK')"
-```
-
-3. **Launch as Administrator** — required to modify the system clock:
-
-   - Search for **Command Prompt** in the Start menu
-   - Right-click → **Run as administrator**
-   - In the window that opens, navigate to the folder containing the file:
+Install Python 3.8+ from [python.org](https://www.python.org/downloads/windows/) with **"Add Python to PATH"**. Launch from **Administrator Command Prompt**:
 
 ```cmd
 cd C:\path\to\folder
 python sysclock_gui.py
 ```
 
-   Alternatively, create a Desktop shortcut with:
-   - Target: `python.exe C:\path\to\sysclock_gui.py`
-   - Advanced → **Run as administrator** ✓
-
-> ⚠️ Without Administrator privileges, the time, NTP and timezone functions will have no effect. The application signals this with the **NO ROOT** indicator in the title bar.
-
----
-
-#### Launch — quick reference
+#### Quick Launch Reference
 
 | System | Command |
 |---|---|
 | Linux | `sudo python3 sysclock_gui.py` |
 | macOS | `sudo python3 sysclock_gui.py` |
-| Windows | Command Prompt as Administrator → `python sysclock_gui.py` |
+| Windows | Administrator Command Prompt → `python sysclock_gui.py` |
 
-#### Keyboard Shortcuts
+---
 
-| Key | Action |
-|---|---|
-| `<` or `,` | Move the clock **backward** by the current step |
-| `>` or `.` | Move the clock **forward** by the current step |
-| `+` or `=` | **Increase** the step to the next preset |
-| `-` or `_` | **Decrease** the step to the previous preset |
-| `Q` or `Esc` | **Quit** the application |
+#### FT8 / FT4 — DT Correction Panel
 
-#### Step Controls Panel
+1. Read the **DT** value from WSJT-X, JTDX or MSHV (e.g. `+0.8` or `-1.2`).
+2. Enter it in the **DT value (s)** field and press **APPLY DT** — correction is applied with inverted sign.
+3. Use the **quick buttons** (±0.1s … ±2s) for instant corrections.
+4. **Tolerance bar**: green |DT| < 0.5s ✓, orange < 1s ⚠, red ≥ 1s ✗.
 
-1. Choose a step using the **preset buttons** or the **slider** for a custom value.
-2. Click **◀◀ BACK** to move the clock backward, **FORWARD ▶▶** to move it forward.
-3. The total accumulated offset is always shown in the top-left panel.
-4. Click **RESET OFFSET** to zero the counter (does not modify the system clock).
+#### SET EXACT TIME Panel
 
-#### Set Exact Time Panel
-
-1. Enter the date in the **Date** field in `YYYY-MM-DD` format.
-2. Enter the time in the **Time** field in `HH:MM:SS` format.
-3. Click **NOW** to automatically fill in the current time.
-4. Click **SET** to apply the date/time to the system.
+Date `YYYY-MM-DD`, time `HH:MM:SS`. **NOW** pre-fills current time. **SET** applies to system.
 
 #### NTP Panel
 
-- The NTP status (active / inactive) is shown by a colored dot (green = active).
-- Click **ENABLE NTP** to enable automatic time synchronization.
-- Click **DISABLE NTP** to disable it (required before manually changing the time on Linux).
+- Green dot = NTP active, red = inactive.
+- **ENABLE NTP** — unmask + re-enable automatic sync.
+- **DISABLE NTP** — full disable: stops, disables and masks all known daemons (including `systemd-timesyncd.socket`) + Linux kernel PLL reset.
+- **RESTORE CLOCK FROM SNAPSHOT** — restores OS clock from snapshot saved at DISABLE NTP, using monotonic counter. No network required.
 
-#### Timezone Panel
+#### TIMEZONE Panel
 
-1. Select the desired timezone from the dropdown menu.
-2. Click **APPLY** to set it on the system.
+Select timezone from dropdown and press **APPLY**.
 
-#### History Chart
+#### OFFSET HISTORY Chart
 
-The chart shows the cumulative offset trend, updated every second. Minimum and maximum values are displayed below the chart. The dashed horizontal line represents zero.
+Cumulative offset trend updated every 500ms. Min/max shown below. Dashed line = zero.
 
 ---
 
 ### Notes and Warnings
 
-- On **Linux**, if `sudo` is configured without a password (`NOPASSWD`), commands run silently. Otherwise you may need to enter your password in the terminal from which the application is launched.
-- On **macOS**, some commands require that `sudo` does not prompt for a password for the current user, or that `su` is used instead.
-- On **Windows**, the application uses system APIs directly (`SetLocalTime` via ctypes, `tzutil`, `w32tm`) without going through `cmd`. The program must be launched from a **Command Prompt with Administrator privileges**.
-- Manually changing the system time with **NTP active** on Linux will be overwritten automatically by the NTP daemon. Disable NTP before making manual changes. On Windows, the `w32time` service is managed through the NTP buttons in the application.
-- The **offset counter** is purely informational and local to the application: it resets when the program is closed.
+- On **Linux**: `clock_settime` via libc (nanosecond) + `adjtimex` PLL reset after every correction.
+- On **Linux**: **DISABLE NTP** masks `systemd-timesyncd.socket` to prevent automatic restart via socket activation.
+- On **macOS**: kernel PLL reset is not applicable.
+- On **Windows**: `SetLocalTime()` via WinAPI (millisecond). Must launch from Administrator Command Prompt.
+- The **offset counter** is local to the application and resets on close.
+- Linux-specific functions (`clock_settime`, `adjtimex`) are never called on macOS or Windows.
 
 ---
 
 ### License
 
 ```
-SYSCLOCK — System Clock Manager
+SYSCLOCK — System Time Control
 Copyright (C) 2026  Alessandro Orlando
 
 This program is free software: you can redistribute it and/or modify

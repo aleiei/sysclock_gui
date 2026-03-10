@@ -1,5 +1,20 @@
 # RELEASE NOTES
 
+## v1.0.3 - 2026-03-10
+
+Documentation update focused on screenshot placement and readability.
+
+### Included
+
+- Updated `README.md` current version badge to `v1.0.3`.
+- Expanded screenshot section to include both `images/1.png` and `images/2.png`.
+- Added contextual screenshot references near the FT8/FT4 operational panel sections (Italian and English).
+
+### Repository Metadata
+
+- Tag: `v1.0.3`
+- GitHub release: `SYSCLOCK v1.0.3`
+
 ## v1.0.2 - 2026-03-10
 
 Release dedicated to the Windows standalone executable package.

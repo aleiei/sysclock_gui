@@ -3,11 +3,19 @@
 > **Ham Radio — Strumento per radioamatori / Ham Radio Tool**
 > © 2026 Alessandro Orlando — GNU General Public License v3.0
 
+> **Versione corrente / Current version: v1.0.3 (2026-03-10)**
+
 ---
 
 ## Screenshot
 
-![SYSCLOCK GUI screenshot](images/1.png)
+### Vista generale / General overview
+
+![SYSCLOCK GUI overview](images/1.png)
+
+### Pannelli operativi / Operational panels
+
+![SYSCLOCK GUI operational panels](images/2.png)
 
 ---
 
@@ -186,6 +194,10 @@ python -m PyInstaller -F -w --name SysClockControl sysclock_gui.py
 2. Inserirlo nel campo **DT value (s)** e premere **APPLY DT** — la correzione viene applicata con segno invertito.
 3. Usare i **pulsanti quick** (±0.1s … ±2s) per correzioni istantanee.
 4. La **barra di tolleranza**: verde |DT| < 0.5s ✓, arancione < 1s ⚠, rosso ≥ 1s ✗.
+
+Riferimento visivo del pannello operativo:
+
+![Pannello operativo SYSCLOCK](images/2.png)
 
 #### Pannello SET EXACT TIME
 
@@ -399,6 +411,10 @@ dist\SysClockControl.exe
 2. Enter it in the **DT value (s)** field and press **APPLY DT** — correction is applied with inverted sign.
 3. Use the **quick buttons** (±0.1s … ±2s) for instant corrections.
 4. **Tolerance bar**: green |DT| < 0.5s ✓, orange < 1s ⚠, red ≥ 1s ✗.
+
+Operational panel visual reference:
+
+![SYSCLOCK operational panel](images/2.png)
 
 #### SET EXACT TIME Panel
 

@@ -9,11 +9,11 @@
 
 ## Screenshot
 
-### Vista generale / General overview
+### Dark Version
 
 ![SYSCLOCK GUI overview](images/1.png)
 
-### Pannelli operativi / Operational panels
+### Clear Version
 
 ![SYSCLOCK GUI operational panels](images/2.png)
 

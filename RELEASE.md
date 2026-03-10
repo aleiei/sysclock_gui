@@ -1,5 +1,27 @@
 # RELEASE NOTES
 
+## v1.0.2 - 2026-03-10
+
+Release dedicated to the Windows standalone executable package.
+
+### Included
+
+- Added and validated standalone build target for `SysClockControl.exe` (Windows 11).
+- Updated release focus to provide a Python-free execution path for Windows users.
+- Confirmed administrator launch requirement for all system time operations.
+
+### Repository Metadata
+
+- Tag: `v1.0.2`
+- GitHub release: `SYSCLOCK v1.0.2`
+- Main asset: `SysClockControl.exe`
+
+### Windows Build Command
+
+```cmd
+python -m PyInstaller -F -w --name SysClockControl sysclock_gui.py
+```
+
 ## v1.0.1 - 2026-03-09
 
 Patch release focused on repository presentation and documentation clarity.

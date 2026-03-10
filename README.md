@@ -161,6 +161,12 @@ Il file eseguibile si trova nella cartella `dist`:
 dist\SysClockControl.exe
 ```
 
+Per rigenerare l'eseguibile (maintainer release):
+
+```cmd
+python -m PyInstaller -F -w --name SysClockControl sysclock_gui.py
+```
+
 > **Importante:** avviare `SysClockControl.exe` con **click destro → Esegui come amministratore**, in quanto le operazioni di sistema richiedono privilegi elevati.
 
 #### Riepilogo avvio

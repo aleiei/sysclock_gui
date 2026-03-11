@@ -1,5 +1,32 @@
 # RELEASES
 
+## v1.0.4 - 2026-03-11
+
+Distribution update: Linux standalone executables added.
+
+### Included
+
+- Added `dist/sysclock_gui` — Linux standalone executable, Dark version (PyInstaller).
+- Added `dist/sysclock_gui_clear` — Linux standalone executable, Clear version (PyInstaller).
+- Updated `README.md` (IT + EN) with dedicated Linux standalone section and launch instructions.
+- Updated Quick Launch Reference tables with `dist/sysclock_gui` and `dist/sysclock_gui_clear` entries.
+- Updated `README.md` current version badge to `v1.0.4`.
+
+### Repository Metadata
+
+- Tag: `v1.0.4`
+- GitHub release: `SYSCLOCK v1.0.4`
+- Main assets: `dist/sysclock_gui`, `dist/sysclock_gui_clear`
+
+### Linux Build Commands
+
+```bash
+pyinstaller -F -w --name sysclock_gui sysclock_gui.py
+pyinstaller -F -w --name sysclock_gui_clear sysclock_gui_clear.py
+```
+
+---
+
 ## v1.0.3 - 2026-03-10
 
 Documentation update focused on screenshot placement and readability.

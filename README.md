@@ -3,7 +3,7 @@
 > **Ham Radio — Strumento per radioamatori / Ham Radio Tool**
 > © 2026 Alessandro Orlando — GNU General Public License v3.0
 
-> **Versione corrente / Current version: v1.0.3 (2026-03-10)**
+> **Versione corrente / Current version: v1.0.4 (2026-03-11)**
 
 ---
 
@@ -160,6 +160,35 @@ cd C:\percorso\cartella
 python sysclock_gui.py
 ```
 
+##### 🐧 Linux — Eseguibili standalone
+
+Sono disponibili due versioni precompilate per **Linux** che non richiedono l'installazione di Python.
+I file eseguibili si trovano nella cartella `dist`:
+
+```
+dist/sysclock_gui        ← versione Dark
+dist/sysclock_gui_clear  ← versione Clear
+```
+
+Per prima cosa rendili eseguibili, poi avviali con i privilegi di root:
+
+```bash
+chmod +x dist/sysclock_gui dist/sysclock_gui_clear
+sudo dist/sysclock_gui
+# oppure
+sudo dist/sysclock_gui_clear
+```
+
+Per rigenerare gli eseguibili (maintainer release):
+
+```bash
+pip install pyinstaller
+pyinstaller -F -w --name sysclock_gui sysclock_gui.py
+pyinstaller -F -w --name sysclock_gui_clear sysclock_gui_clear.py
+```
+
+> **Importante:** avviare sempre con `sudo`, in quanto le operazioni di sistema richiedono privilegi di root.
+
 ##### 🪟 Windows 11 — Eseguibile standalone
 
 È disponibile una versione precompilata compatibile con **Windows 11**, che non richiede l'installazione di Python.
@@ -182,6 +211,8 @@ python -m PyInstaller -F -w --name SysClockControl sysclock_gui.py
 | Sistema | Comando |
 |---|---|
 | Linux | `sudo python3 sysclock_gui.py` |
+| Linux (standalone dark) | `sudo dist/sysclock_gui` |
+| Linux (standalone clear) | `sudo dist/sysclock_gui_clear` |
 | macOS | `sudo python3 sysclock_gui.py` |
 | Windows | Prompt come Amministratore → `python sysclock_gui.py` |
 | Windows 11 (standalone) | `dist\SysClockControl.exe` — click destro → **Esegui come amministratore** |
@@ -383,6 +414,35 @@ cd C:\path\to\folder
 python sysclock_gui.py
 ```
 
+##### 🐧 Linux — Standalone Executables
+
+Two pre-built versions for **Linux** are available, requiring no Python installation.
+The executables are located in the `dist` folder:
+
+```
+dist/sysclock_gui        ← Dark version
+dist/sysclock_gui_clear  ← Clear version
+```
+
+Make them executable first, then launch with root privileges:
+
+```bash
+chmod +x dist/sysclock_gui dist/sysclock_gui_clear
+sudo dist/sysclock_gui
+# or
+sudo dist/sysclock_gui_clear
+```
+
+To rebuild the executables (maintainer release):
+
+```bash
+pip install pyinstaller
+pyinstaller -F -w --name sysclock_gui sysclock_gui.py
+pyinstaller -F -w --name sysclock_gui_clear sysclock_gui_clear.py
+```
+
+> **Important:** always launch with `sudo`, as system-level operations require root privileges.
+
 ##### 🪟 Windows 11 — Standalone Executable
 
 A pre-built version compatible with **Windows 11** is available, requiring no Python installation.
@@ -399,6 +459,8 @@ dist\SysClockControl.exe
 | System | Command |
 |---|---|
 | Linux | `sudo python3 sysclock_gui.py` |
+| Linux (standalone dark) | `sudo dist/sysclock_gui` |
+| Linux (standalone clear) | `sudo dist/sysclock_gui_clear` |
 | macOS | `sudo python3 sysclock_gui.py` |
 | Windows | Administrator Command Prompt → `python sysclock_gui.py` |
 | Windows 11 (standalone) | `dist\SysClockControl.exe` — right-click → **Run as administrator** |
